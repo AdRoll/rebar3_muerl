@@ -1,6 +1,6 @@
 -module(muerl).
 
--export([mutate/2, mutate/3]).
+-export([list_mutations/2, list_mutations/3]).
 
 -type read_files_in_parallel() :: boolean().
 -type result() ::
@@ -10,21 +10,24 @@
             analyzing => Ms :: non_neg_integer(),
             total => Ms :: non_neg_integer()}}.
 
--spec mutate([file:filename()], read_files_in_parallel()) -> result().
-mutate(Files, ReadFilesInParallel) ->
-    mutate(Files, mutator:default_mutators(), ReadFilesInParallel).
+-spec list_mutations([file:filename()], read_files_in_parallel()) -> result().
+list_mutations(Files, ReadFilesInParallel) ->
+    list_mutations(Files, mutator:default_mutators(), ReadFilesInParallel).
 
 %% @doc Runs a list of mutators over a list of files and returns all the
-%%      surviving mutations.
--spec mutate([file:filename()], [mutator:t()], read_files_in_parallel()) -> result().
-mutate(Files, Mutators, ReadFilesInParallel) ->
+%%      mutations that could be applied in the files.
+-spec list_mutations([file:filename()], [mutator:t()], read_files_in_parallel()) ->
+                        result().
+list_mutations(Files, Mutators, ReadFilesInParallel) ->
     StartMs = erlang:monotonic_time(millisecond),
     {ParsingNanos, ASTs} = timer:tc(fun() -> get_asts(Files, ReadFilesInParallel) end),
     FilesAndASTs = lists:zip(Files, ASTs),
     erlang:yield(),
     {AnalyzingNanos, Results} =
         timer:tc(fun() ->
-                    [Result || Mutator <- Mutators, Result <- mutator:mutate(Mutator, FilesAndASTs)]
+                    [Result
+                     || Mutator <- Mutators,
+                        Result <- mutator:list_mutations(Mutator, FilesAndASTs)]
                  end),
     TotalMs = erlang:monotonic_time(millisecond) - StartMs,
     #{results => Results,
@@ -42,7 +45,7 @@ get_asts(Files, false) ->
 %% @hidden Only used through rpc:pmap/3
 -spec get_ast(file:filename()) -> erl_syntax:forms().
 get_ast(File) ->
-    case ktn_dodger:parse_file(File, [no_fail, parse_macro_definitions]) of
+    case epp:parse_file(File, [no_fail, parse_macro_definitions, {location, {1, 1}}]) of
         {ok, AST} ->
             AST;
         {error, OpenError} ->
