@@ -48,7 +48,7 @@ default_mutators() ->
     [Module
      || File
             <- filelib:wildcard(
-                   filename:join([code:lib_dir(muerl), "**/*.beam"])),
+                   filename:join([code:lib_dir(rebar3_muerl), "**/*.beam"])),
         Module <- [list_to_atom(filename:basename(File, ".beam"))],
         {behaviour, Behaviours} <- Module:module_info(attributes),
         lists:member(?MODULE, Behaviours)].

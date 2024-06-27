@@ -1,0 +1,10 @@
+{application,
+ rebar3_muerl,
+ [{description, "A rebar plugin to apply mutation testing to your codebase"},
+  {vsn, git},
+  {registered, []},
+  {applications, [kernel, stdlib, syntax_tools, katana_code]},
+  {env, []},
+  {modules, []},
+  {licenses, ["MIT"]},
+  {links, []}]}.
