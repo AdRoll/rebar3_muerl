@@ -47,21 +47,25 @@ print_mutation(File, Node, #{pretty_print_list := true}) ->
     CaseExpr = erl_prettypr:format(Node),
     case muerl_utils:get_pos_from_node(Node) of
         {Line, Column} ->
-            rebar_api:info("[mutator: ~p] ~ts:~p:~p: alter clauses order in~n```~n~ts~n```",
+            rebar_api:info("[mutator: ~p] ~ts:~p:~p: alter order of clauses in~n```~n~ts~n```",
                            [?MODULE, File, Line, Column, CaseExpr]);
         Line ->
-            rebar_api:info("[mutator: ~p] ~ts:~p: alter clauses order in~n```~n~ts~n```",
+            rebar_api:info("[mutator: ~p] ~ts:~p: alter order of clauses in~n```~n~ts~n```",
                            [?MODULE, File, Line, CaseExpr])
     end;
 print_mutation(File, Node, _Options) ->
-    [CaseExprArgument | _] =
-        string:split(
-            erl_prettypr:format(Node), "\n"),
+    %% first, we remove the \n and a number of whitespaces that go afterward
+    CaseExpr0 =
+        re:replace(
+            erl_prettypr:format(Node), "\n(    )?", " ", [{return, list}, global]),
+    %% then, we remove everything after the first arm to avoid printing the whole thing
+    %% unless asked to (that's what `pretty_print_list` is for)
+    CaseExpr = re:replace(CaseExpr0, ";.*end$", "; [...] end", [{return, list}, global]),
     case muerl_utils:get_pos_from_node(Node) of
         {Line, Column} ->
-            rebar_api:info("[mutator: ~p] ~ts:~p:~p: alter clauses order in '~ts'",
-                           [?MODULE, File, Line, Column, CaseExprArgument]);
+            rebar_api:info("[mutator: ~p] ~ts:~p:~p: alter order of clauses in '~ts'",
+                           [?MODULE, File, Line, Column, CaseExpr]);
         Line ->
-            rebar_api:info("[mutator: ~p] ~ts:~p: alter clauses order in '~ts'",
-                           [?MODULE, File, Line, CaseExprArgument])
+            rebar_api:info("[mutator: ~p] ~ts:~p: alter order of clauses in '~ts'",
+                           [?MODULE, File, Line, CaseExpr])
     end.
