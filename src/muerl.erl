@@ -28,7 +28,8 @@ run(Files, Mutators, Options) ->
     erlang:yield(),
     {RunningNanos, Results} =
         timer:tc(fun() ->
-                    [Result || Mutator <- Mutators, Result <- mutator:Mode(Mutator, FilesAndASTs)]
+                    [Result
+                     || Mutator <- Mutators, Result <- mutator:Mode(Mutator, FilesAndASTs, Options)]
                  end),
     TotalMs = erlang:monotonic_time(millisecond) - StartMs,
     #{results => Results,
