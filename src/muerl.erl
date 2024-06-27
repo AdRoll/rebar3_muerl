@@ -12,6 +12,8 @@
             analyzing => Ms :: non_neg_integer(),
             total => Ms :: non_neg_integer()}}.
 
+-export_type([result/0, options/0]).
+
 -spec run([file:filename()], options()) -> result().
 run(Files, Options) ->
     run(Files, mutator:default_mutators(), Options).

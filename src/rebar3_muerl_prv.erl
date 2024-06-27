@@ -20,6 +20,12 @@ init(State) ->
 
 opts() ->
     [{mode, $m, "mode", {atom, list_mutations}, "Target mode (list_mutations / mutate)"},
+     {dir, $d, "dir", string, "Directory on which to search for files to run muerl with"},
+     {files,
+      $f,
+      "files",
+      string,
+      "Force muerl to be run on a specific file (or a series of comma-separated files)"},
      {parallel_processing,
       undefined,
       "parallel_processing",
@@ -35,10 +41,11 @@ opts() ->
 do(State) ->
     Opts = handle_opts(State),
     rebar_api:debug("Opts:~n\t~p", [Opts]),
-    Files = [F || F <- filelib:wildcard("**/*.erl"), not is_hidden(F)],
-    rebar_api:debug("muerl will be run on the following files:~n\t~p", [Files]),
+    Files = get_files_from_opts(Opts),
+    rebar_api:debug("muerl will run on the following files:~n\t~p", [Files]),
     try muerl:run(Files, Opts) of
         Map when is_map(Map) ->
+            print_result(Map, Opts, length(Files)),
             {ok, State}
     catch
         Kind:Error:Stack ->
@@ -46,6 +53,25 @@ do(State) ->
             {error, format_error(Error)}
     end.
 
+print_result(#{results := Mutations},
+             #{mode := list_mutations, pretty_print_list := PrettyPrintList},
+             NumOfFiles) ->
+    rebar_api:info("Found a total of ~p mutations across ~p files",
+                   [length(Mutations), NumOfFiles]);
+print_result(_Result, #{mode := mutate}, _NumOfFiles) ->
+    rebar_api:warn("Not implemented yet, sorry!").
+
+-spec get_files_from_opts(muerl:options()) -> [file:filename()].
+get_files_from_opts(#{files := Files}) ->
+    Files1 = re:split(Files, ", *", [{return, list}]),
+    lists:map(fun rebar_file_utils:absolute_path/1, Files1);
+get_files_from_opts(#{dir := Dir}) ->
+    AbsPath = rebar_file_utils:absolute_path(Dir),
+    [F || F <- filelib:wildcard("**/*.erl", AbsPath), not is_hidden(F)];
+get_files_from_opts(_Opts) ->
+    [F || F <- filelib:wildcard("**/*.erl"), not is_hidden(F)].
+
+-spec handle_opts(rebar_state:t()) -> muerl:options().
 handle_opts(State) ->
     {CliOpts, _} = rebar_state:command_parsed_args(State),
     ConfigOpts = rebar_state:get(State, muerl, []),
