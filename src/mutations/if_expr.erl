@@ -1,4 +1,4 @@
--module(case_of).
+-module(if_expr).
 
 -behaviour(mutator).
 
@@ -6,14 +6,14 @@
 
 -spec list_mutations(mutator:files_and_asts(), muerl:options()) -> [mutator:result()].
 list_mutations(FilesAndASTs, Options) ->
-    CaseOfs = list_case_ofs(FilesAndASTs, Options),
-    lists:flatten(CaseOfs).
+    IfExprs = list_if_exprs(FilesAndASTs, Options),
+    lists:flatten(IfExprs).
 
-list_case_ofs(FilesAndASTs, Options) ->
+list_if_exprs(FilesAndASTs, Options) ->
     lists:foldl(fun({File, AST}, Result) ->
                    FoldFun =
                        fun(Node, Acc) ->
-                          case erl_syntax:type(Node) == case_expr of
+                          case erl_syntax:type(Node) == if_expr of
                               true ->
                                   print_mutation(File, Node, Options),
                                   [Node | Acc];
@@ -44,24 +44,24 @@ build_result(File, Node) ->
       line => Line}.
 
 print_mutation(File, Node, #{pretty_print_list := true}) ->
-    CaseExpr = erl_prettypr:format(Node),
+    IfExpr = erl_prettypr:format(Node),
     case muerl_utils:get_pos_from_node(Node) of
         {Line, Column} ->
             rebar_api:info("[mutator: ~p] ~ts:~p:~p: alter clauses order in~n```~n~ts~n```",
-                           [?MODULE, File, Line, Column, CaseExpr]);
+                           [?MODULE, File, Line, Column, IfExpr]);
         Line ->
             rebar_api:info("[mutator: ~p] ~ts:~p: alter clauses order in~n```~n~ts~n```",
-                           [?MODULE, File, Line, CaseExpr])
+                           [?MODULE, File, Line, IfExpr])
     end;
 print_mutation(File, Node, _Options) ->
-    [CaseExprArgument | _] =
-        string:split(
-            erl_prettypr:format(Node), "\n"),
+    IfExpr =
+        re:replace(
+            erl_prettypr:format(Node), "\n|   ", " ", [{return, list}, global]),
     case muerl_utils:get_pos_from_node(Node) of
         {Line, Column} ->
             rebar_api:info("[mutator: ~p] ~ts:~p:~p: alter clauses order in '~ts'",
-                           [?MODULE, File, Line, Column, CaseExprArgument]);
+                           [?MODULE, File, Line, Column, IfExpr]);
         Line ->
             rebar_api:info("[mutator: ~p] ~ts:~p: alter clauses order in '~ts'",
-                           [?MODULE, File, Line, CaseExprArgument])
+                           [?MODULE, File, Line, IfExpr])
     end.
