@@ -23,7 +23,7 @@ list_receive_exprs(FilesAndASTs, Options) ->
                           end
                        end,
                    ResultsForFile =
-                       [build_result(File, Match)
+                       [muerl_utils:build_result(File, Match)
                         || Node <- AST,
                            Match <- erl_syntax_lib:fold(FoldFun, [], Node),
                            Match /= []],
@@ -31,18 +31,6 @@ list_receive_exprs(FilesAndASTs, Options) ->
                 end,
                 [],
                 FilesAndASTs).
-
-build_result(File, Node) ->
-    Line =
-        case muerl_utils:get_pos_from_node(Node) of
-            {L, _C} ->
-                L;
-            L ->
-                L
-        end,
-    #{file => File,
-      output => Node,
-      line => Line}.
 
 get_mutation_string(Node, true = _PrettyPrint) ->
     erl_prettypr:format(Node);

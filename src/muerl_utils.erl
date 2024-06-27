@@ -31,3 +31,16 @@ get_pos_from_node(Node) ->
         Anno ->
             {erl_anno:line(Anno), erl_anno:column(Anno)}
     end.
+
+-spec build_result(file:filename(), erl_syntax:syntaxTree()) -> muerl:result().
+build_result(File, Node) ->
+    Line =
+        case get_pos_from_node(Node) of
+            {L, _C} ->
+                L;
+            L ->
+                L
+        end,
+    #{file => File,
+      output => Node,
+      line => Line}.
