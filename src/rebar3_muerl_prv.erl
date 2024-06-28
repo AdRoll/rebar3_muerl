@@ -48,7 +48,7 @@ do(State) ->
     rebar_api:debug("Opts:~n\t~p", [Opts0]),
     Files = get_files_from_opts(Opts0),
     Opts = remove_rebar_only_opts(Opts0),
-    Mutators = maps:get(mutators, Opts),
+    Mutators = maps:get(mutators, Opts, mutator:default_mutators()),
     rebar_api:info("muerl will run using the following mutators:~n\t~p", [Mutators]),
     rebar_api:debug("muerl will run on the following files:~n\t~p", [Files]),
     try muerl:run(Files, Mutators, Opts) of
