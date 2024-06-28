@@ -21,6 +21,11 @@ init(State) ->
 opts() ->
     [{mode, $m, "mode", {atom, list_mutations}, "Target mode (list_mutations / mutate)"},
      {dir, $d, "dir", string, "Directory on which to search for files to run muerl with"},
+     {mutators,
+      undefined,
+      "mutators",
+      string,
+      "Tell muerl which mutators should be used when running (can be one or a comma-separated list)"},
      {files,
       $f,
       "files",
@@ -43,8 +48,10 @@ do(State) ->
     rebar_api:debug("Opts:~n\t~p", [Opts0]),
     Files = get_files_from_opts(Opts0),
     Opts = remove_rebar_only_opts(Opts0),
+    Mutators = maps:get(mutators, Opts),
+    rebar_api:info("muerl will run using the following mutators:~n\t~p", [Mutators]),
     rebar_api:debug("muerl will run on the following files:~n\t~p", [Files]),
-    try muerl:run(Files, Opts) of
+    try muerl:run(Files, Mutators, Opts) of
         Map when is_map(Map) ->
             print_result(Map, Opts, length(Files)),
             {ok, State}
@@ -73,7 +80,18 @@ get_files_from_opts(_Opts) ->
 
 -spec handle_opts(rebar_state:t()) -> map().
 handle_opts(State) ->
-    {CliOpts, _} = rebar_state:command_parsed_args(State),
+    {CliOpts0, _} = rebar_state:command_parsed_args(State),
+    CliOpts =
+        case lists:keyfind(mutators, 1, CliOpts0) of
+            {mutators, MutatorsAsString} ->
+                Mutators =
+                    lists:map(fun list_to_existing_atom/1,
+                              re:split(MutatorsAsString, ", *", [{return, list}])),
+                lists:keyreplace(mutators, 1, CliOpts0, {mutators, Mutators});
+            false ->
+                CliOpts0
+        end,
+
     ConfigOpts = rebar_state:get(State, muerl, []),
     rebar_api:debug("CliOpts:~n\t~p~nConfigOpts:~n\t~p", [CliOpts, ConfigOpts]),
     maps:from_list(

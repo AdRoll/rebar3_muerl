@@ -1,6 +1,6 @@
 -module(muerl).
 
--export([run/2, run/3]).
+-export([run/3]).
 %% Exported so rpc:pmap/3 works
 -export([get_ast/1]).
 
@@ -13,10 +13,6 @@
             total => Ms :: non_neg_integer()}}.
 
 -export_type([result/0, options/0]).
-
--spec run([file:filename()], options()) -> result().
-run(Files, Options) ->
-    run(Files, mutator:default_mutators(), Options).
 
 -spec run([file:filename()], [mutator:t()], options()) -> result().
 run(Files, Mutators, Options) ->
