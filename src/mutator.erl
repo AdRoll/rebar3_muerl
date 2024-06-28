@@ -46,6 +46,8 @@ list_mutations(Mutator, FilesAndASTs, Options) ->
             erlang:error(mutate_error)
     end.
 
+-spec print_mutation(t(), file:filename(), erl_syntax:syntaxTree(), muerl:options()) ->
+                        ok.
 print_mutation(Mutator, File, Node, Options) ->
     PrettyPrint = maps:get(pretty_print_list, Options),
     Expr = Mutator:get_mutation_string(Node, PrettyPrint),
