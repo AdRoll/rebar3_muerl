@@ -4,7 +4,7 @@
 %% Exported so rpc:pmap/3 works
 -export([get_ast/1]).
 
--type options() :: #{parallel_processing => boolean(), pretty_print_list => boolean()}.
+-type options() :: #{parallel_processing => boolean(), pretty_print => boolean()}.
 -type result() ::
     #{results := [mutator:result()],
       stats :=

@@ -36,9 +36,9 @@ opts() ->
       "parallel_processing",
       {boolean, true},
       "if the files should be processed in parallel"},
-     {pretty_print_list,
+     {pretty_print,
       undefined,
-      "pretty_print_list",
+      "pretty_print",
       {boolean, false},
       "if the list of mutations should be pretty-printed"}].
 

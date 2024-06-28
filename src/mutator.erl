@@ -15,8 +15,9 @@
 -callback mutate(files_and_asts()) -> [result()].
 -callback list_mutations(files_and_asts(), muerl:options()) -> [result()].
 %% Callbacks to DRY the printing of the mutations
--callback get_mutation_string(erl_syntax:syntaxTree(), boolean()) -> string().
--callback get_mutation_print_format(line_and_column | line, boolean()) -> io:format().
+-callback get_mutation_string(erl_syntax:syntaxTree(), muerl:options()) -> string().
+-callback get_mutation_print_format(line_and_column | line, muerl:options()) ->
+                                       io:format().
 
 %% Remove when `mutate` gets implemented
 -optional_callbacks([mutate/1]).
@@ -49,16 +50,15 @@ list_mutations(Mutator, FilesAndASTs, Options) ->
 -spec print_mutation(t(), file:filename(), erl_syntax:syntaxTree(), muerl:options()) ->
                         ok.
 print_mutation(Mutator, File, Node, Options) ->
-    PrettyPrint = maps:get(pretty_print_list, Options),
-    Expr = Mutator:get_mutation_string(Node, PrettyPrint),
+    Expr = Mutator:get_mutation_string(Node, Options),
     case muerl_utils:get_pos_from_node(Node) of
         {Line, Column} ->
             rebar_api:info(
-                Mutator:get_mutation_print_format(line_and_column, PrettyPrint),
+                Mutator:get_mutation_print_format(line_and_column, Options),
                 [Mutator, File, Line, Column, Expr]);
         Line ->
             rebar_api:info(
-                Mutator:get_mutation_print_format(line, PrettyPrint), [Mutator, File, Line, Expr])
+                Mutator:get_mutation_print_format(line, Options), [Mutator, File, Line, Expr])
     end.
 
 %% @doc The list of default mutators to generate and apply.
